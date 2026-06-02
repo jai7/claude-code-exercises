@@ -45,6 +45,42 @@
 }
 
 :root {
+  /* === Enterprise Design Tokens === */
+
+  /* Focus — WCAG 2.1 AA: 3:1 contrast against white */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: oklch(0.488 0.181 265);
+
+  /* Semantic surfaces */
+  --surface-base: oklch(1 0 0);
+  --surface-subtle: oklch(0.975 0 0);
+  --surface-overlay: oklch(0.965 0 0);
+
+  /* Brand — enterprise indigo */
+  --brand-50:  oklch(0.963 0.022 264);
+  --brand-100: oklch(0.929 0.044 264);
+  --brand-600: oklch(0.488 0.181 265);
+  --brand-700: oklch(0.418 0.166 265);
+
+  /* Text — all WCAG AA verified on white */
+  --text-primary:   oklch(0.145 0 0);   /* ~20:1 */
+  --text-secondary: oklch(0.356 0 0);   /* ~9:1  */
+  --text-tertiary:  oklch(0.502 0 0);   /* ~5:1  */
+
+  /* Borders */
+  --border-subtle:  oklch(0.925 0 0);
+  --border-default: oklch(0.878 0 0);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.09), 0 1px 2px -1px oklch(0 0 0 / 0.08);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.07), 0 2px 4px -2px oklch(0 0 0 / 0.05);
+
+  /* Layout */
+  --header-height: 3.5rem;
+
+  /* === shadcn/ui tokens (unchanged) === */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -119,5 +155,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 }

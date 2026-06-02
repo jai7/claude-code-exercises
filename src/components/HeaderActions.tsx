@@ -166,8 +166,9 @@ export function HeaderActions({ user, projectId }: HeaderActionsProps) {
         className="h-8 w-8"
         onClick={handleSignOut}
         title="Sign out"
+        aria-label="Sign out"
       >
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4" aria-hidden="true" />
       </Button>
     </div>
   );

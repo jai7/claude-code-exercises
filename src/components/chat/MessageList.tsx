@@ -4,6 +4,7 @@ import { Message } from "ai";
 import { cn } from "@/lib/utils";
 import { User, Bot, Loader2, FilePlus, FilePen, FileSearch, Trash2, FolderInput } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import styles from "./MessageList.module.css";
 
 function getToolLabel(toolName: string, args: Record<string, unknown>): { action: string; file: string; Icon: React.ElementType } {
   const path = (args?.path as string) ?? "";
@@ -36,127 +37,115 @@ interface MessageListProps {
 export function MessageList({ messages, isLoading }: MessageListProps) {
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full px-4 text-center">
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 mb-4 shadow-sm">
-          <Bot className="h-7 w-7 text-blue-600" />
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>
+          <Bot className="h-7 w-7" style={{ color: "var(--brand-600)" }} aria-hidden="true" />
         </div>
-        <p className="text-neutral-900 font-semibold text-lg mb-2">Start a conversation to generate React components</p>
-        <p className="text-neutral-500 text-sm max-w-sm">I can help you create buttons, forms, cards, and more</p>
+        <p className={styles.emptyTitle}>Start a conversation to generate React components</p>
+        <p className={styles.emptySubtext}>I can help you create buttons, forms, cards, and more</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 py-6">
-      <div className="space-y-6 max-w-4xl mx-auto w-full">
+    <div
+      role="log"
+      aria-live="polite"
+      aria-label="Chat messages"
+      className={styles.messageList}
+    >
+      <div className={styles.messageStack}>
         {messages.map((message) => (
           <div
             key={message.id || message.content}
-            className={cn(
-              "flex gap-4",
-              message.role === "user" ? "justify-end" : "justify-start"
-            )}
+            className={message.role === "user" ? styles.messageRowUser : styles.messageRowAssistant}
           >
             {message.role === "assistant" && (
-              <div className="flex-shrink-0">
-                <div className="w-9 h-9 rounded-lg bg-white border border-neutral-200 shadow-sm flex items-center justify-center">
-                  <Bot className="h-4.5 w-4.5 text-neutral-700" />
-                </div>
+              <div className={styles.avatarAssistant}>
+                <Bot className="h-4 w-4" style={{ color: "var(--text-secondary)" }} aria-hidden="true" />
               </div>
             )}
-            
-            <div className={cn(
-              "flex flex-col gap-2 max-w-[85%]",
-              message.role === "user" ? "items-end" : "items-start"
-            )}>
-              <div className={cn(
-                "rounded-xl px-4 py-3",
-                message.role === "user" 
-                  ? "bg-blue-600 text-white shadow-sm" 
-                  : "bg-white text-neutral-900 border border-neutral-200 shadow-sm"
-              )}>
-                <div className="text-sm">
-                  {message.parts ? (
-                    <>
-                      {message.parts.map((part, partIndex) => {
-                        switch (part.type) {
-                          case "text":
-                            return message.role === "user" ? (
-                              <span key={partIndex} className="whitespace-pre-wrap">{part.text}</span>
-                            ) : (
-                              <MarkdownRenderer
-                                key={partIndex}
-                                content={part.text}
-                                className="prose-sm"
-                              />
-                            );
-                          case "reasoning":
-                            return (
-                              <div key={partIndex} className="mt-3 p-3 bg-white/50 rounded-md border border-neutral-200">
-                                <span className="text-xs font-medium text-neutral-600 block mb-1">Reasoning</span>
-                                <span className="text-sm text-neutral-700">{part.reasoning}</span>
-                              </div>
-                            );
-                          case "tool-invocation": {
-                            const tool = part.toolInvocation;
-                            const { action, file, Icon } = getToolLabel(tool.toolName, tool.args as Record<string, unknown>);
-                            const done = tool.state === "result" && tool.result;
-                            return (
-                              <div key={partIndex} className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs border border-neutral-200">
-                                {done ? (
-                                  <Icon className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                                ) : (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500 flex-shrink-0" />
-                                )}
-                                <span className="text-neutral-500">{action}</span>
-                                <span className="text-neutral-800 font-medium font-mono">{file}</span>
-                              </div>
-                            );
-                          }
-                          case "source":
-                            return (
-                              <div key={partIndex} className="mt-2 text-xs text-neutral-500">
-                                Source: {JSON.stringify(part.source)}
-                              </div>
-                            );
-                          case "step-start":
-                            return partIndex > 0 ? <hr key={partIndex} className="my-3 border-neutral-200" /> : null;
-                          default:
-                            return null;
+
+            <div className={message.role === "user" ? styles.messageContentUser : styles.messageContentAssistant}>
+              <div className={message.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
+                {message.parts ? (
+                  <>
+                    {message.parts.map((part, partIndex) => {
+                      switch (part.type) {
+                        case "text":
+                          return message.role === "user" ? (
+                            <span key={partIndex} className="whitespace-pre-wrap">{part.text}</span>
+                          ) : (
+                            <MarkdownRenderer
+                              key={partIndex}
+                              content={part.text}
+                              className="prose-sm"
+                            />
+                          );
+                        case "reasoning":
+                          return (
+                            <div key={partIndex} className={styles.reasoningBlock}>
+                              <span className={styles.reasoningLabel}>Reasoning</span>
+                              <span className={styles.reasoningText}>{part.reasoning}</span>
+                            </div>
+                          );
+                        case "tool-invocation": {
+                          const tool = part.toolInvocation;
+                          const { action, file, Icon } = getToolLabel(tool.toolName, tool.args as Record<string, unknown>);
+                          const done = tool.state === "result" && tool.result;
+                          return (
+                            <div key={partIndex} className={styles.toolBadge}>
+                              {done ? (
+                                <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "oklch(0.527 0.154 150)" }} aria-hidden="true" />
+                              ) : (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: "var(--brand-600)" }} aria-hidden="true" />
+                              )}
+                              <span className={styles.toolBadgeLabel}>{action}</span>
+                              <span className={styles.toolBadgeFile}>{file}</span>
+                            </div>
+                          );
                         }
-                      })}
-                      {isLoading &&
-                        message.role === "assistant" &&
-                        messages.indexOf(message) === messages.length - 1 && (
-                          <div className="flex items-center gap-2 mt-3 text-neutral-500">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            <span className="text-sm">Generating...</span>
-                          </div>
-                        )}
-                    </>
-                  ) : message.content ? (
-                    message.role === "user" ? (
-                      <span className="whitespace-pre-wrap">{message.content}</span>
-                    ) : (
-                      <MarkdownRenderer content={message.content} className="prose-sm" />
-                    )
-                  ) : isLoading &&
-                    message.role === "assistant" &&
-                    messages.indexOf(message) === messages.length - 1 ? (
-                    <div className="flex items-center gap-2 text-neutral-500">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-sm">Generating...</span>
-                    </div>
-                  ) : null}
-                </div>
+                        case "source":
+                          return (
+                            <div key={partIndex} className={styles.sourceCitation}>
+                              Source: {JSON.stringify(part.source)}
+                            </div>
+                          );
+                        case "step-start":
+                          return partIndex > 0 ? <hr key={partIndex} className={styles.stepDivider} /> : null;
+                        default:
+                          return null;
+                      }
+                    })}
+                    {isLoading &&
+                      message.role === "assistant" &&
+                      messages.indexOf(message) === messages.length - 1 && (
+                        <div className={styles.loadingIndicator}>
+                          <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                          <span>Generating...</span>
+                        </div>
+                      )}
+                  </>
+                ) : message.content ? (
+                  message.role === "user" ? (
+                    <span className="whitespace-pre-wrap">{message.content}</span>
+                  ) : (
+                    <MarkdownRenderer content={message.content} className="prose-sm" />
+                  )
+                ) : isLoading &&
+                  message.role === "assistant" &&
+                  messages.indexOf(message) === messages.length - 1 ? (
+                  <div className={styles.loadingIndicator}>
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                    <span>Generating...</span>
+                  </div>
+                ) : null}
               </div>
             </div>
-            
+
             {message.role === "user" && (
-              <div className="flex-shrink-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-600 shadow-sm flex items-center justify-center">
-                  <User className="h-4.5 w-4.5 text-white" />
-                </div>
+              <div className={styles.avatarUser}>
+                <User className="h-4 w-4 text-white" aria-hidden="true" />
               </div>
             )}
           </div>
